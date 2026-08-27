@@ -1,44 +1,78 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../models/phone_model.dart';
 
-class PhoneKService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+class PhoneModel {
+  final String id;
+  final String title;
+  final double priceSDG;
+  final String brand;
+  final String storage;
+  final int batteryHealth;
+  final String state;
+  final String locality;
+  final String sellerPhone;
+  final String whatsappNumber;
+  final List<String> imageUrls;
+  final DateTime createdAt;
 
-  // جلب الإعلانات من قاعدة البيانات
-  Stream<List<PhoneModel>> getPhones() {
-    return _firestore
-        .collection('phones')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => PhoneModel.fromMap(doc.data(), doc.id))
-          .toList();
-    });
+  PhoneModel({
+    required this.id,
+    required this.title,
+    required this.priceSDG,
+    required this.brand,
+    required this.storage,
+    required this.batteryHealth,
+    required this.state,
+    required this.locality,
+    required this.sellerPhone,
+    required this.whatsappNumber,
+    required this.imageUrls,
+    required this.createdAt,
+  });
+
+  // تحويل البيانات لإرسالها إلى Firestore بأمان
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'priceSDG': priceSDG,
+      'brand': brand,
+      'storage': storage,
+      'batteryHealth': batteryHealth,
+      'state': state,
+      'locality': locality,
+      'sellerPhone': sellerPhone,
+      'whatsappNumber': whatsappNumber,
+      'imageUrls': imageUrls,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
   }
 
-  // إضافة إعلان جديد
-  Future<void> addPhone(PhoneModel phone) async {
-    await _firestore.collection('phones').add(phone.toMap());
-  }
-
-  // إجراء اتصال هاتفي مباشر
-  static Future<void> makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
-    }
-  }
-
-  // فتح المحادثة المباشرة عبر الواتساب
-  static Future<void> openWhatsApp(String phone, String phoneTitle) async {
-    final String cleanPhone = phone.replaceAll('+', '').replaceAll(' ', '');
-    final String message = Uri.encodeComponent("مرحباً، أستفسر عن إعلانك لهاتف: $phoneTitle على تطبيق PhoneK");
-    final Uri whatsappUri = Uri.parse("https://wa.me/$cleanPhone?text=$message");
-    
-    if (await canLaunchUrl(whatsappUri)) {
-      await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
-    }
+  // قراءة البيانات من Firestore مع معالجة صارمة للأنواع لمنع الانهيار
+  factory PhoneModel.fromMap(Map<String, dynamic> map, String documentId) {
+    return PhoneModel(
+      id: documentId,
+      title: map['title'] ?? '',
+      priceSDG: map['priceSDG'] != null
+          ? (map['priceSDG'] is int
+              ? (map['priceSDG'] as int).toDouble()
+              : map['priceSDG'] as double)
+          : 0.0,
+      brand: map['brand'] ?? '',
+      storage: map['storage'] ?? '',
+      batteryHealth: map['batteryHealth'] != null
+          ? (map['batteryHealth'] is double
+              ? (map['batteryHealth'] as double).toInt()
+              : map['batteryHealth'] as int)
+          : 100,
+      state: map['state'] ?? '',
+      locality: map['locality'] ?? '',
+      sellerPhone: map['sellerPhone'] ?? '',
+      whatsappNumber: map['whatsappNumber'] ?? '',
+      imageUrls: map['imageUrls'] != null
+          ? List<String>.from(map['imageUrls'])
+          : [],
+      createdAt: map['createdAt'] != null
+          ? (map['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
+    );
   }
 }
