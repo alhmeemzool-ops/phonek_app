@@ -1,41 +1,23 @@
-name: Build PhoneK APK
+name: phonek_app
+description: "PhoneK app"
+publish_to: 'none'
+version: 1.0.0+1
 
-on:
-  push:
-    branches: [ main, master, main-branch, رئيسي, "تطبيق الهاتف" ]
-  workflow_dispatch:
+environment:
+  sdk: ">=3.0.0 <4.0.0"
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.14.0
+  url_launcher: ^6.2.2
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
 
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.10.5'
-        channel: 'stable'
-
-    - name: Prepare and Get Dependencies
-      run: |
-        flutter config --no-analytics
-        rm -f pubspec.lock
-        flutter pub get
-
-    - name: Build APK
-      run: flutter build apk --release
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: PhoneK-APK
-        path: build/app/outputs/flutter-apk/app-release.apk
+flutter:
+  uses-material-design: true
