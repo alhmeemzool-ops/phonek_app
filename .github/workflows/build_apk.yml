@@ -25,9 +25,18 @@ jobs:
         flutter-version: '3.19.6'
         channel: 'stable'
 
-    - name: Create Flutter Project Structure
+    - name: Create Android Files
       run: |
-        flutter create . --org com.phonek.app --project-name phonek_app --platforms=android
+        flutter create . --platforms=android --overwrite
+
+    - name: Fix MinSdkVersion to 21
+      run: |
+        GRADLE_FILE="android/app/build.gradle"
+        if [ -f "$GRADLE_FILE" ]; then
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' $GRADLE_FILE
+          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' $GRADLE_FILE
+          echo "Updated minSdkVersion to 21 successfully."
+        fi
 
     - name: Get Dependencies
       run: flutter pub get
