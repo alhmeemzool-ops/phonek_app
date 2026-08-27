@@ -25,10 +25,6 @@ jobs:
         flutter-version: '3.19.6'
         channel: 'stable'
 
-    - name: Create Android Files
-      run: |
-        flutter create . --platforms=android --overwrite
-
     - name: Fix MinSdkVersion to 21
       run: |
         GRADLE_FILE="android/app/build.gradle"
