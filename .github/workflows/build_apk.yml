@@ -24,16 +24,30 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.3.10'
+        flutter-version: '3.22.2'
         channel: 'stable'
+        cache: false
 
-    - name: Initialize Flutter Environment
+    - name: Fix Environment and Gradle Automatically
       run: |
-        flutter --version
         flutter config --no-analytics
+        GRADLE_WRAPPER="android/gradle/wrapper/gradle-wrapper.properties"
+        if [ -f "$GRADLE_WRAPPER" ]; then
+          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip" > $GRADLE_WRAPPER
+        fi
+        echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
 
     - name: Get Dependencies
       run: flutter pub get
+
+    - name: Build APK
+      run: flutter build apk --release
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: PhoneK-APK
+        path: build/app/outputs/flutter-apk/app-release.apk
 
     - name: Build APK
       run: flutter build apk --release
