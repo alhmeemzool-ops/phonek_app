@@ -22,17 +22,8 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.19.6'
+        flutter-version: '3.13.9'
         channel: 'stable'
-
-    - name: Fix MinSdkVersion to 21
-      run: |
-        GRADLE_FILE="android/app/build.gradle"
-        if [ -f "$GRADLE_FILE" ]; then
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' $GRADLE_FILE
-          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' $GRADLE_FILE
-          echo "Updated minSdkVersion to 21 successfully."
-        fi
 
     - name: Get Dependencies
       run: flutter pub get
@@ -41,7 +32,7 @@ jobs:
       run: flutter build apk --release
 
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-action@v4
       with:
         name: PhoneK-APK
         path: build/app/outputs/flutter-apk/app-release.apk
