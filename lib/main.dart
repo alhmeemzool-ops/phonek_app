@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'views/add_phone_screen.dart';
+import 'views/phone_details_screen.dart';
+import 'models/phone_model.dart';
 
 void main() {
   runApp(const PhoneKApp());
@@ -28,28 +31,8 @@ class PhoneKApp extends StatelessWidget {
   }
 }
 
-class MainHomeScreen extends StatefulWidget {
+class MainHomeScreen extends StatelessWidget {
   const MainHomeScreen({Key? key}) : super(key: key);
-
-  @override
-  State<MainHomeScreen> createState() => _MainHomeScreenState();
-}
-
-class _MainHomeScreenState extends State<MainHomeScreen> {
-  final ScrollController _scrollController = ScrollController();
-  bool _showTopBar = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels < -10 && !_showTopBar) {
-        setState(() => _showTopBar = true);
-      } else if (_scrollController.position.pixels > 20 && _showTopBar) {
-        setState(() => _showTopBar = false);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,93 +40,56 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       appBar: AppBar(
         title: const Text('فونك | PhoneK', style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.person, color: Color(0xFFFFD700)), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.add_box, color: Color(0xFFFFD700)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddPhoneScreen()),
+              );
+            },
+          ),
         ],
       ),
-      body: RefreshIndicator(
-        color: const Color(0xFFFFD700),
-        onRefresh: () async {
-          await Future.delayed(const Duration(seconds: 1));
+      body: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          final samplePhone = PhoneModel(
+            id: '$index',
+            title: 'iPhone ${11 + index} Pro Max',
+            priceSDG: 350000.0 + (index * 50000),
+            brand: 'Apple',
+            storage: '256GB',
+            batteryHealth: 88,
+            state: 'الخرطوم',
+            locality: 'الخرطوم',
+            sellerPhone: '0912345678',
+            whatsappNumber: '249912345678',
+            imageUrls: [],
+            createdAt: DateTime.now(),
+          );
+
+          return Card(
+            color: const Color(0xFF1E1E1E),
+            margin: const EdgeInsets.only(bottom: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              leading: const Icon(Icons.phone_android, size: 40, color: Color(0xFFFFD700)),
+              title: Text(samplePhone.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('${samplePhone.priceSDG} ج.س • ${samplePhone.state}', style: const TextStyle(color: Colors.grey)),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFFFFD700)),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PhoneDetailsScreen(phone: samplePhone),
+                  ),
+                );
+              },
+            ),
+          );
         },
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            if (_showTopBar)
-              SliverToBoxAdapter(
-                child: Container(
-                  color: const Color(0xFF2A2A2A),
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: const [
-                      Text('الرئيسية', style: TextStyle(color: Color(0xFFFFD700))),
-                      Text('المفضلة', style: TextStyle(color: Colors.white)),
-                      Text('إضافة هاتف', style: TextStyle(color: Colors.white)),
-                      Text('إشعاراتي', style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                ),
-              ),
-            SliverPadding(
-              padding: const EdgeInsets.all(12),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.72,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => const PhoneCardWidget(),
-                  childCount: 6,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class PhoneCardWidget extends StatelessWidget {
-  const PhoneCardWidget({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[850],
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  ),
-                  child: const Center(child: Icon(Icons.phone_android, size: 55, color: Colors.grey)),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('iPhone 13 Pro', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                SizedBox(height: 2),
-                Text('128GB • بطارية 89%', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                SizedBox(height: 4),
-                Text('450,000 ج.س', style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 13)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
