@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../models/phone_model.dart';
+
+class PhoneDetailsScreen extends StatelessWidget {
+  final PhoneModel phone;
+
+  const PhoneDetailsScreen({Key? key, required this.phone}) : super(key: key);
+
+  void _launchPhone(String phoneNumber) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    }
+  }
+
+  void _launchWhatsApp(String phoneNum) async {
+    final Uri whatsappUri = Uri.parse('https://wa.me/$phoneNum');
+    if (await canLaunchUrl(whatsappUri)) {
+      await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(phone.title, style: const TextStyle(color: Color(0xFFFFD700))),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Icon(Icons.phone_android, size: 80, color: Color(0xFFFFD700)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(phone.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Text('السعر: ${phone.priceSDG} ج.س', style: const TextStyle(fontSize: 18, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+            const Divider(height: 30, color: Colors.grey),
+            ListTile(
+              leading: const Icon(Icons.memory, color: Color(0xFFFFD700)),
+              title: Text('الماركة والذاكرة: ${phone.brand} - ${phone.storage}'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.battery_charging_full, color: Color(0xFFFFD700)),
+              title: Text('صحة البطارية: ${phone.batteryHealth}%'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.location_on, color: Color(0xFFFFD700)),
+              title: Text('الموقع: ${phone.state} - ${phone.locality}'),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    icon: const Icon(Icons.chat, color: Colors.white),
+                    label: const Text('واتساب', style: TextStyle(color: Colors.white)),
+                    onPressed: () => _launchWhatsApp(phone.whatsappNumber),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                    icon: const Icon(Icons.call, color: Colors.white),
+                    label: const Text('اتصال', style: TextStyle(color: Colors.white)),
+                    onPressed: () => _launchPhone(phone.sellerPhone),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
