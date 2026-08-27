@@ -1,5 +1,5 @@
 name: phonek_app
-description: "تطبيق PhoneK لبيع وشراء الهواتف في السودان"
+description: "PhoneK mobile application"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,27 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  
-  # خدمات قاعدة البيانات والتسجيل
-  firebase_core: ^2.27.0
-  cloud_firestore: ^4.15.8
-  firebase_storage: ^11.6.9
-  google_sign_in: ^6.2.1
-
-  # أدوات الصورة والشبكة والاتصال
-  url_launcher: ^6.2.5
-  image_picker: ^1.0.7
-  flutter_image_compress: ^2.1.8
-  cached_network_image: ^3.3.1
-  provider: ^6.1.2
+  cupertino_icons: ^1.0.2
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.14.0
+  url_launcher: ^6.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true
-
