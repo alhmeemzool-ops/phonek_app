@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'views/login_screen.dart';
+import 'views/signup_screen.dart';
 import 'views/add_phone_screen.dart';
 import 'views/phone_details_screen.dart';
 import 'models/phone_model.dart';
@@ -10,7 +13,7 @@ void main() async {
   try {
     await Firebase.initializeApp();
   } catch (e) {
-    // تتأكد من عمل التطبيق حتى لو انتظرت تهيئة السيرفر
+    print('Firebase initialization error: $e');
   }
   runApp(const PhoneKApp());
 }
@@ -34,22 +37,130 @@ class PhoneKApp extends StatelessWidget {
           surface: Color(0xFF1E1E1E),
         ),
       ),
-      home: const MainHomeScreen(),
+      home: const AuthWrapper(),
+      routes: {
+        '/home': (context) => const MainHomeScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
+      },
     );
   }
 }
 
-class MainHomeScreen extends StatelessWidget {
-  const MainHomeScreen({Key? key}) : super(key: key);
+/// فئة للتحقق من حالة المستخدم
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final PhoneKService phoneService = PhoneKService();
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: const Color(0xFF121212),
+            body: const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFFFD700),
+              ),
+            ),
+          );
+        }
 
+        if (snapshot.hasData) {
+          return const MainHomeScreen();
+        }
+
+        return const LoginScreen();
+      },
+    );
+  }
+}
+
+class MainHomeScreen extends StatefulWidget {
+  const MainHomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MainHomeScreen> createState() => _MainHomeScreenState();
+}
+
+class _MainHomeScreenState extends State<MainHomeScreen> {
+  final PhoneKService phoneService = PhoneKService();
+  String? userName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        userName = user.email?.split('@').first ?? 'المستخدم';
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'تسجيل الخروج',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'هل تريد تسجيل الخروج؟',
+          style: TextStyle(color: Colors.grey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'تسجيل الخروج',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('فونك | PhoneK', style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+        title: const Text(
+          'فونك | PhoneK',
+          style: TextStyle(
+            color: Color(0xFFFFD700),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: Text(
+                userName ?? 'المستخدم',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.add_box, color: Color(0xFFFFD700)),
             onPressed: () {
@@ -59,13 +170,19 @@ class MainHomeScreen extends StatelessWidget {
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Color(0xFFFFD700)),
+            onPressed: _logout,
+          ),
         ],
       ),
       body: StreamBuilder<List<PhoneModel>>(
         stream: phoneService.getPhones(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)));
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+            );
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
@@ -88,12 +205,28 @@ class MainHomeScreen extends StatelessWidget {
               return Card(
                 color: const Color(0xFF1E1E1E),
                 margin: const EdgeInsets.only(bottom: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: ListTile(
-                  leading: const Icon(Icons.phone_android, size: 40, color: Color(0xFFFFD700)),
-                  title: Text(phone.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${phone.priceSDG} ج.س • ${phone.state}', style: const TextStyle(color: Colors.grey)),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFFFFD700)),
+                  leading: const Icon(
+                    Icons.phone_android,
+                    size: 40,
+                    color: Color(0xFFFFD700),
+                  ),
+                  title: Text(
+                    phone.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    '${phone.priceSDG} ج.س • ${phone.state}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Color(0xFFFFD700),
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,
