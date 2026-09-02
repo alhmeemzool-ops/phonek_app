@@ -1,9 +1,12 @@
 [build]
-  command = "flutter config --enable-web && flutter pub get && flutter build web --release"
+  command = "bash ./build.sh"
   publish = "build/web"
 
 [build.environment]
   FLUTTER_VERSION = "latest"
+  # Netlify uses Ubuntu 20.04 which has old Flutter
+  # We need to install Flutter explicitly
+  PATH = "/opt/build/repo/.pub-cache/bin:/opt/build/repo/flutter/bin:$PATH"
 
 [[redirects]]
   from = "/*"
