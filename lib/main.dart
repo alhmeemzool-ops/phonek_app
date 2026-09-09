@@ -47,6 +47,7 @@ class PhoneKApp extends StatelessWidget {
   }
 }
 
+/// فئة للتحقق من حالة المستخدم
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({Key? key}) : super(key: key);
 
@@ -84,50 +85,162 @@ class MainHomeScreen extends StatefulWidget {
 }
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _pages = const [
-    _HomePage(),
-    _PhonesPage(),
-    _AddPage(),
-    _ProfilePage(),
-  ];
+  final PhoneKService phoneService = PhoneKService();
+  String? userName;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
-          NavigationDestination(icon: Icon(Icons.phone_android_outlined), selectedIcon: Icon(Icons.phone_android), label: 'الهواتف'),
-          NavigationDestination(icon: Icon(Icons.add_circle_outline), selectedIcon: Icon(Icons.add_circle), label: 'إضافة'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'حسابي'),
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        userName = user.email?.split('@').first ?? 'المستخدم';
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'تسجيل الخروج',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'هل تريد تسجيل الخروج؟',
+          style: TextStyle(color: Colors.grey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'تسجيل الخروج',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
         ],
       ),
     );
   }
-}
 
-class _HomePage extends StatelessWidget {
-  const _HomePage();
   @override
-  Widget build(BuildContext context) => const Center(child: Text('PhoneK'));
-}
-class _PhonesPage extends StatelessWidget {
-  const _PhonesPage();
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('الهواتف'));
-}
-class _AddPage extends StatelessWidget {
-  const _AddPage();
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('إضافة هاتف'));
-}
-class _ProfilePage extends StatelessWidget {
-  const _ProfilePage();
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('حسابي'));
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'فونك | PhoneK',
+          style: TextStyle(
+            color: Color(0xFFFFD700),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: Text(
+                userName ?? 'المستخدم',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_box, color: Color(0xFFFFD700)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddPhoneScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Color(0xFFFFD700)),
+            onPressed: _logout,
+          ),
+        ],
+      ),
+      body: StreamBuilder<List<PhoneModel>>(
+        stream: phoneService.getPhones(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+            );
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text(
+                'لا توجد إعلانات مضافة حالياً.\nاضغط على زر الإضافة بالأعلى لإدراج أول هاتف!',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            );
+          }
+
+          final phones = snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: phones.length,
+            itemBuilder: (context, index) {
+              final phone = phones[index];
+
+              return Card(
+                color: const Color(0xFF1E1E1E),
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.phone_android,
+                    size: 40,
+                    color: Color(0xFFFFD700),
+                  ),
+                  title: Text(
+                    phone.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    '${phone.priceSDG} ج.س • ${phone.state}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Color(0xFFFFD700),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PhoneDetailsScreen(phone: phone),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
 }
